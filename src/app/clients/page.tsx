@@ -28,6 +28,7 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingClientId, setEditingClientId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -67,35 +68,53 @@ export default function ClientsPage() {
       ? (total_profit * commission_percentage) / 100
       : 0;
 
-    // Insert the client
-    const { data: newClient, error } = await supabase.from('clients').insert({
-      name: formData.name,
-      email: formData.email || null,
-      invested_amount: parseFloat(formData.invested_amount) || 0,
-      commission_percentage: commission_percentage,
-      total_profit: total_profit,
-      commission_due: commission_due,
-    }).select().single();
+    if (editingClientId) {
+      // Update existing client
+      const { error } = await supabase.from('clients').update({
+        name: formData.name,
+        email: formData.email || null,
+        invested_amount: parseFloat(formData.invested_amount) || 0,
+        commission_percentage: commission_percentage,
+      }).eq('id', editingClientId);
 
-    if (error) {
-      alert('Error adding client: ' + error.message);
-      console.error(error);
-      return;
-    }
+      if (error) {
+        alert('Error updating client: ' + error.message);
+        console.error(error);
+        return;
+      }
 
-    // If client has existing profit, create a daily PNL entry for today
-    if (total_profit !== 0 && newClient) {
-      const today = new Date().toISOString().split('T')[0];
-      const { error: pnlError } = await supabase.from('daily_pnl').insert({
-        client_id: newClient.id,
-        date: today,
-        pnl_amount: total_profit,
-        notes: 'Initial profit when client was added',
-      });
+      alert('Client updated successfully!');
+    } else {
+      // Insert new client
+      const { data: newClient, error } = await supabase.from('clients').insert({
+        name: formData.name,
+        email: formData.email || null,
+        invested_amount: parseFloat(formData.invested_amount) || 0,
+        commission_percentage: commission_percentage,
+        total_profit: total_profit,
+        commission_due: commission_due,
+      }).select().single();
 
-      if (pnlError) {
-        console.error('Error creating initial PNL entry:', pnlError);
-        alert('Client added but failed to create initial PNL entry. You can add it manually in Daily PNL page.');
+      if (error) {
+        alert('Error adding client: ' + error.message);
+        console.error(error);
+        return;
+      }
+
+      // If client has existing profit, create a daily PNL entry for today
+      if (total_profit !== 0 && newClient) {
+        const today = new Date().toISOString().split('T')[0];
+        const { error: pnlError } = await supabase.from('daily_pnl').insert({
+          client_id: newClient.id,
+          date: today,
+          pnl_amount: total_profit,
+          notes: 'Initial profit when client was added',
+        });
+
+        if (pnlError) {
+          console.error('Error creating initial PNL entry:', pnlError);
+          alert('Client added but failed to create initial PNL entry. You can add it manually in Daily PNL page.');
+        }
       }
     }
 
@@ -113,6 +132,20 @@ export default function ClientsPage() {
       total_profit: '',
       commission_due: '',
     });
+    setEditingClientId(null);
+  }
+
+  function handleEdit(client: Client) {
+    setFormData({
+      name: client.name,
+      email: client.email || '',
+      invested_amount: client.invested_amount.toString(),
+      commission_percentage: client.commission_percentage.toString(),
+      total_profit: client.total_profit.toString(),
+      commission_due: client.commission_due.toString(),
+    });
+    setEditingClientId(client.id);
+    setDialogOpen(true);
   }
 
   async function handleDelete(clientId: string, clientName: string) {
@@ -141,7 +174,8 @@ export default function ClientsPage() {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
-      maximumFractionDigits: 0,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(amount);
   };
 
@@ -219,13 +253,22 @@ export default function ClientsPage() {
                       {formatCurrency(client.commission_received)}
                     </TableCell>
                     <TableCell className="text-center">
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleDelete(client.id, client.name)}
-                      >
-                        Delete
-                      </Button>
+                      <div className="flex gap-2 justify-center">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEdit(client)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDelete(client.id, client.name)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -238,9 +281,11 @@ export default function ClientsPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Add New Client</DialogTitle>
+            <DialogTitle>{editingClientId ? 'Edit Client' : 'Add New Client'}</DialogTitle>
             <DialogDescription>
-              Add a new client with their investment details and historical profit if any.
+              {editingClientId
+                ? 'Update client information. Note: Total profit is managed through daily PNL entries.'
+                : 'Add a new client with their investment details and historical profit if any.'}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
@@ -287,26 +332,28 @@ export default function ClientsPage() {
                   required
                 />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="total_profit">Current Total Profit (if any)</Label>
-                <Input
-                  id="total_profit"
-                  type="number"
-                  step="0.01"
-                  value={formData.total_profit}
-                  onChange={(e) => setFormData({ ...formData, total_profit: e.target.value })}
-                  placeholder="0"
-                />
-                <p className="text-xs text-gray-600">
-                  Enter existing profit if adding mid-week. This will be recorded as today&apos;s PNL entry and will appear in Weekly Settlement.
-                </p>
-              </div>
+              {!editingClientId && (
+                <div className="grid gap-2">
+                  <Label htmlFor="total_profit">Current Total Profit (if any)</Label>
+                  <Input
+                    id="total_profit"
+                    type="number"
+                    step="0.01"
+                    value={formData.total_profit}
+                    onChange={(e) => setFormData({ ...formData, total_profit: e.target.value })}
+                    placeholder="0"
+                  />
+                  <p className="text-xs text-gray-600">
+                    Enter existing profit if adding mid-week. This will be recorded as today&apos;s PNL entry and will appear in Weekly Settlement.
+                  </p>
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => { setDialogOpen(false); resetForm(); }}>
                 Cancel
               </Button>
-              <Button type="submit">Add Client</Button>
+              <Button type="submit">{editingClientId ? 'Update Client' : 'Add Client'}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
