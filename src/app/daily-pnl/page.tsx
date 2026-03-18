@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Client, DailyPnl } from '@/types/database.types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,11 +32,7 @@ export default function DailyPnlPage() {
   const [pnlInputs, setPnlInputs] = useState<{ [key: string]: string }>({});
   const [saving, setSaving] = useState<{ [key: string]: boolean }>({});
 
-  useEffect(() => {
-    loadData();
-  }, [selectedDate]);
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
     const supabase = createClient();
 
     // Get all active clients
@@ -96,7 +92,11 @@ export default function DailyPnlPage() {
     setPnlInputs(initialInputs);
 
     setLoading(false);
-  }
+  }, [selectedDate]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   async function updateClientTotals(clientId: string) {
     const supabase = createClient();
@@ -377,7 +377,7 @@ export default function DailyPnlPage() {
               • Green rows = Already saved for today
               • Enter positive numbers for profit, negative for loss (e.g., -5000)
               • Press Enter after typing to quickly save
-              • Yesterday's PNL shown for reference
+              • Yesterday&apos;s PNL shown for reference
             </p>
           </div>
         </CardContent>

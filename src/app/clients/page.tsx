@@ -298,7 +298,7 @@ export default function ClientsPage() {
                   placeholder="0"
                 />
                 <p className="text-xs text-gray-600">
-                  Enter existing profit if adding mid-week. This will be recorded as today's PNL entry and will appear in Weekly Settlement.
+                  Enter existing profit if adding mid-week. This will be recorded as today&apos;s PNL entry and will appear in Weekly Settlement.
                 </p>
               </div>
             </div>

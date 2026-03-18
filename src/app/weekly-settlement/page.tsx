@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Client } from '@/types/database.types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,10 +26,6 @@ export default function WeeklySettlementPage() {
   const [loading, setLoading] = useState(true);
   const [weekDates, setWeekDates] = useState({ start: '', end: '' });
 
-  useEffect(() => {
-    loadWeeklyData();
-  }, []);
-
   function getCurrentWeekDates() {
     const today = new Date();
     const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
@@ -51,7 +47,7 @@ export default function WeeklySettlementPage() {
     };
   }
 
-  async function loadWeeklyData() {
+  const loadWeeklyData = useCallback(async () => {
     const supabase = createClient();
     const weekDates = getCurrentWeekDates();
 
@@ -107,7 +103,11 @@ export default function WeeklySettlementPage() {
     const results = await Promise.all(weeklyDataPromises);
     setWeeklyData(results);
     setLoading(false);
-  }
+  }, []);
+
+  useEffect(() => {
+    loadWeeklyData();
+  }, [loadWeeklyData]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -260,7 +260,7 @@ export default function WeeklySettlementPage() {
                 <p>• {totals.profitableClients} clients made profit this week</p>
                 <p>• {totals.lossClients} clients had losses (no commission)</p>
                 <p className="text-xs text-blue-600 mt-2">
-                  Note: Commission is calculated only on profitable clients. Clients in loss don't incur commission until they recover.
+                  Note: Commission is calculated only on profitable clients. Clients in loss don&apos;t incur commission until they recover.
                 </p>
               </div>
             </div>
