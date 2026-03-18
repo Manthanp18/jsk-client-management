@@ -95,20 +95,20 @@ ALTER TABLE daily_pnl ENABLE ROW LEVEL SECURITY;
 ALTER TABLE withdrawals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE commission_payments ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies (Allow all operations for authenticated users)
--- You can customize these based on your auth requirements
+-- RLS Policies (Allow all operations for anon users - since this is a personal app)
+-- For production with authentication, change these to require auth.uid()
 
-CREATE POLICY "Allow all operations for authenticated users" ON clients
-    FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "Allow all operations for anon users" ON clients
+    FOR ALL USING (true);
 
-CREATE POLICY "Allow all operations for authenticated users" ON daily_pnl
-    FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "Allow all operations for anon users" ON daily_pnl
+    FOR ALL USING (true);
 
-CREATE POLICY "Allow all operations for authenticated users" ON withdrawals
-    FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "Allow all operations for anon users" ON withdrawals
+    FOR ALL USING (true);
 
-CREATE POLICY "Allow all operations for authenticated users" ON commission_payments
-    FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "Allow all operations for anon users" ON commission_payments
+    FOR ALL USING (true);
 
 -- Sample data (optional, for testing)
 -- Uncomment to insert sample client
