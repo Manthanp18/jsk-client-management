@@ -13,6 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 interface ClientWeeklyData {
   client: Client;
@@ -25,8 +26,9 @@ export default function WeeklySettlementPage() {
   const [weeklyData, setWeeklyData] = useState<ClientWeeklyData[]>([]);
   const [loading, setLoading] = useState(true);
   const [weekDates, setWeekDates] = useState({ start: '', end: '' });
+  const [selectedWeekOffset, setSelectedWeekOffset] = useState(0); // 0 = current week, -1 = last week, etc.
 
-  function getCurrentWeekDates() {
+  function getWeekDates(weekOffset: number = 0) {
     const today = new Date();
     const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
 
@@ -34,9 +36,12 @@ export default function WeeklySettlementPage() {
     const monday = new Date(today);
     const daysFromMonday = currentDay === 0 ? -6 : 1 - currentDay; // If Sunday, go back 6 days
     monday.setDate(today.getDate() + daysFromMonday);
+
+    // Apply week offset (positive = future, negative = past)
+    monday.setDate(monday.getDate() + (weekOffset * 7));
     monday.setHours(0, 0, 0, 0);
 
-    // Calculate Friday of current week
+    // Calculate Friday of that week
     const friday = new Date(monday);
     friday.setDate(monday.getDate() + 4);
     friday.setHours(23, 59, 59, 999);
@@ -49,7 +54,7 @@ export default function WeeklySettlementPage() {
 
   const loadWeeklyData = useCallback(async () => {
     const supabase = createClient();
-    const weekDates = getCurrentWeekDates();
+    const weekDates = getWeekDates(selectedWeekOffset);
 
     setWeekDates({ start: weekDates.monday, end: weekDates.friday });
 
@@ -103,7 +108,7 @@ export default function WeeklySettlementPage() {
     const results = await Promise.all(weeklyDataPromises);
     setWeeklyData(results);
     setLoading(false);
-  }, []);
+  }, [selectedWeekOffset]);
 
   useEffect(() => {
     loadWeeklyData();
@@ -136,13 +141,72 @@ export default function WeeklySettlementPage() {
     return <div className="text-center py-12">Loading weekly settlement data...</div>;
   }
 
+  const isCurrentWeek = selectedWeekOffset === 0;
+  const isFutureWeek = selectedWeekOffset > 0;
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Weekly Settlement</h1>
-        <p className="text-muted-foreground mt-1">
-          Week: {formatDate(weekDates.start)} - {formatDate(weekDates.end)} (Mon-Fri)
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold">Weekly Settlement</h1>
+          <p className="text-muted-foreground mt-1">
+            {formatDate(weekDates.start)} - {formatDate(weekDates.end)} (Mon-Fri)
+          </p>
+          {isCurrentWeek && (
+            <Badge className="mt-2 bg-blue-100 text-blue-800">Current Week</Badge>
+          )}
+          {selectedWeekOffset === -1 && (
+            <Badge className="mt-2 bg-gray-100 text-gray-800">Last Week</Badge>
+          )}
+          {selectedWeekOffset < -1 && (
+            <Badge className="mt-2 bg-gray-100 text-gray-800">
+              {Math.abs(selectedWeekOffset)} weeks ago
+            </Badge>
+          )}
+          {isFutureWeek && (
+            <Badge className="mt-2 bg-purple-100 text-purple-800">Future Week</Badge>
+          )}
+        </div>
+
+        {/* Week Navigation Controls */}
+        <div className="space-y-3">
+          {/* Navigation Arrows */}
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSelectedWeekOffset(selectedWeekOffset - 1)}
+            >
+              ← Previous Week
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSelectedWeekOffset(selectedWeekOffset + 1)}
+            >
+              Next Week →
+            </Button>
+          </div>
+
+          {/* Quick Select Buttons */}
+          <div className="flex gap-2">
+            <Button
+              variant={selectedWeekOffset === -1 ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedWeekOffset(-1)}
+            >
+              Last Week
+            </Button>
+            <Button
+              variant={isCurrentWeek ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedWeekOffset(0)}
+              className={isCurrentWeek ? "bg-blue-600 hover:bg-blue-700" : ""}
+            >
+              Current Week
+            </Button>
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
@@ -254,10 +318,12 @@ export default function WeeklySettlementPage() {
 
           {weeklyData.length > 0 && (
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h3 className="font-semibold text-blue-900 mb-2">Friday Settlement Summary</h3>
+              <h3 className="font-semibold text-blue-900 mb-2">
+                {isCurrentWeek ? 'This Week\'s Settlement Summary' : 'Week Settlement Summary'}
+              </h3>
               <div className="space-y-1 text-sm text-blue-800">
-                <p>• Total commission to collect this week: <span className="font-bold">{formatCurrency(totals.weekCommission)}</span></p>
-                <p>• {totals.profitableClients} clients made profit this week</p>
+                <p>• Total commission {isCurrentWeek ? 'to collect' : 'collected'} this week: <span className="font-bold">{formatCurrency(totals.weekCommission)}</span></p>
+                <p>• {totals.profitableClients} clients made profit</p>
                 <p>• {totals.lossClients} clients had losses (no commission)</p>
                 <p className="text-xs text-blue-600 mt-2">
                   Note: Commission is calculated only on profitable clients. Clients in loss don&apos;t incur commission until they recover.

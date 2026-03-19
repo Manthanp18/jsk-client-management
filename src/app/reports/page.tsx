@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Client, WeeklyReport, Withdrawal, CommissionPayment } from '@/types/database.types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,7 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { generateWeeklyInvoice } from '@/lib/invoiceGenerator';
 
 export default function ReportsPage() {
   const [clients, setClients] = useState<Client[]>([]);
@@ -53,6 +53,8 @@ export default function ReportsPage() {
     payment_date: new Date().toISOString().split('T')[0],
     notes: '',
   });
+
+  const [activeTab, setActiveTab] = useState<'weekly' | 'withdrawals' | 'commission'>('weekly');
 
   useEffect(() => {
     loadClients();
@@ -213,13 +215,11 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Reports</h1>
-          <p className="text-muted-foreground">
-            View weekly reports, withdrawals, and commission payments
-          </p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold">Client Reports & Settlement</h1>
+        <p className="text-muted-foreground mt-1">
+          View client performance, record withdrawals, and track commission payments
+        </p>
       </div>
 
       <Card>
@@ -228,8 +228,10 @@ export default function ReportsPage() {
         </CardHeader>
         <CardContent>
           <Select value={selectedClientId} onValueChange={(value) => setSelectedClientId(value || '')}>
-            <SelectTrigger className="w-full md:w-[300px]">
-              <SelectValue placeholder="Select a client" />
+            <SelectTrigger className="w-full md:w-[400px]">
+              <SelectValue placeholder="Choose a client to view their reports">
+                {selectedClient?.name || 'Choose a client to view their reports'}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {clients.map((client) => (
@@ -244,123 +246,251 @@ export default function ReportsPage() {
 
       {selectedClient && (
         <>
-          <div className="grid gap-4 md:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Invested Amount</CardTitle>
+          {/* Client Summary */}
+          <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+            <CardHeader>
+              <CardTitle className="text-2xl">{selectedClient.name}</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Commission Rate: {selectedClient.commission_percentage}% of profit
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-4">
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Initial Investment</p>
+                  <p className="text-2xl font-bold">
+                    {formatCurrency(selectedClient.invested_amount)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Total Profit/Loss</p>
+                  <p className={`text-2xl font-bold ${selectedClient.total_profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatCurrency(selectedClient.total_profit)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Current Balance</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {formatCurrency(
+                      selectedClient.invested_amount +
+                        selectedClient.total_profit -
+                        selectedClient.total_withdrawals
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Available to withdraw
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Commission Pending</p>
+                  <p className="text-2xl font-bold text-orange-600">
+                    {formatCurrency(selectedClient.commission_due)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    To be paid to you
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Actions */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card className="border-green-200 hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="text-lg">Client Withdraws Money</span>
+                </CardTitle>
+                <CardDescription>
+                  When client withdraws profit or capital from their account
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {formatCurrency(selectedClient.invested_amount)}
+                <Button
+                  onClick={() => setWithdrawalDialogOpen(true)}
+                  className="w-full"
+                  size="lg"
+                >
+                  Record Withdrawal
+                </Button>
+                <div className="mt-4 p-3 bg-muted rounded-md">
+                  <p className="text-sm font-medium">Total Withdrawn So Far</p>
+                  <p className="text-xl font-bold mt-1">{formatCurrency(selectedClient.total_withdrawals)}</p>
                 </div>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Profit</CardTitle>
+
+            <Card className="border-blue-200 hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="text-lg">Client Pays Commission</span>
+                </CardTitle>
+                <CardDescription>
+                  When client pays you commission on their profits
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className={`text-2xl font-bold ${selectedClient.total_profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatCurrency(selectedClient.total_profit)}
+                <Button
+                  onClick={() => setCommissionDialogOpen(true)}
+                  className="w-full"
+                  size="lg"
+                  variant="secondary"
+                >
+                  Record Commission Payment
+                </Button>
+                <div className="mt-4 p-3 bg-muted rounded-md space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Total Received:</span>
+                    <span className="font-semibold">{formatCurrency(selectedClient.commission_received)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-orange-600">
+                    <span className="font-medium">Pending:</span>
+                    <span className="font-bold">{formatCurrency(selectedClient.commission_due)}</span>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Current Balance</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {formatCurrency(
-                    selectedClient.invested_amount +
-                      selectedClient.total_profit -
-                      selectedClient.total_withdrawals
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Commission Due</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {formatCurrency(selectedClient.commission_due)}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {selectedClient.commission_percentage}% on profit
-                </p>
               </CardContent>
             </Card>
           </div>
 
-          <Tabs defaultValue="weekly" className="w-full">
-            <TabsList className="grid w-full md:w-[600px] grid-cols-3">
-              <TabsTrigger value="weekly">Weekly Reports</TabsTrigger>
-              <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
-              <TabsTrigger value="commission">Commission</TabsTrigger>
-            </TabsList>
+          {/* History Section */}
+          <div className="space-y-4">
+            {/* Custom Horizontal Navigation */}
+            <div className="flex gap-2 p-1 bg-gray-100 rounded-lg w-fit">
+              <button
+                onClick={() => setActiveTab('weekly')}
+                className={`px-6 py-3 rounded-md font-medium text-sm transition-all ${
+                  activeTab === 'weekly'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                Weekly Performance
+              </button>
+              <button
+                onClick={() => setActiveTab('withdrawals')}
+                className={`px-6 py-3 rounded-md font-medium text-sm transition-all ${
+                  activeTab === 'withdrawals'
+                    ? 'bg-white text-green-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                Withdrawal History
+              </button>
+              <button
+                onClick={() => setActiveTab('commission')}
+                className={`px-6 py-3 rounded-md font-medium text-sm transition-all ${
+                  activeTab === 'commission'
+                    ? 'bg-white text-orange-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                Commission History
+              </button>
+            </div>
 
-            <TabsContent value="weekly">
+            {/* Weekly Performance Content */}
+            {activeTab === 'weekly' && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Weekly PNL Reports</CardTitle>
+                  <CardTitle>Weekly Performance Summary</CardTitle>
+                  <CardDescription>
+                    View weekly profit/loss breakdown for {selectedClient.name}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Week Start (Monday)</TableHead>
-                        <TableHead>Week End (Friday)</TableHead>
-                        <TableHead className="text-right">Weekly PNL</TableHead>
+                        <TableHead>Week Start</TableHead>
+                        <TableHead>Week End</TableHead>
+                        <TableHead className="text-right">Weekly Profit/Loss</TableHead>
                         <TableHead className="text-center">Trading Days</TableHead>
+                        <TableHead className="text-center">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {weeklyReports.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                            No weekly data yet. Add daily PNL entries to see weekly reports.
+                          <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                            No weekly data available yet. Add daily PNL entries to see weekly summaries.
                           </TableCell>
                         </TableRow>
                       ) : (
-                        weeklyReports.map((report, index) => (
-                          <TableRow key={index}>
-                            <TableCell>
-                              {new Date(report.week_start).toLocaleDateString('en-IN')}
-                            </TableCell>
-                            <TableCell>
-                              {new Date(report.week_end).toLocaleDateString('en-IN')}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <span className={report.weekly_pnl >= 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
-                                {formatCurrency(report.weekly_pnl)}
-                              </span>
-                            </TableCell>
-                            <TableCell className="text-center">{report.trading_days}</TableCell>
-                          </TableRow>
-                        ))
+                        weeklyReports.map((report, index) => {
+                          // Always use 50% commission for invoices
+                          const INVOICE_COMMISSION_PERCENTAGE = 50;
+                          const commissionAmount = report.weekly_pnl > 0
+                            ? (report.weekly_pnl * INVOICE_COMMISSION_PERCENTAGE) / 100
+                            : 0;
+
+                          return (
+                            <TableRow key={index}>
+                              <TableCell>
+                                {new Date(report.week_start).toLocaleDateString('en-IN', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })}
+                              </TableCell>
+                              <TableCell>
+                                {new Date(report.week_end).toLocaleDateString('en-IN', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <span className={`font-semibold ${report.weekly_pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                  {report.weekly_pnl >= 0 ? '+' : ''}{formatCurrency(report.weekly_pnl)}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-center">{report.trading_days}</TableCell>
+                              <TableCell className="text-center">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    if (!selectedClient) return;
+                                    generateWeeklyInvoice({
+                                      clientName: selectedClient.name,
+                                      weekStart: report.week_start,
+                                      weekEnd: report.week_end,
+                                      weeklyPnl: report.weekly_pnl,
+                                      commissionPercentage: INVOICE_COMMISSION_PERCENTAGE,
+                                      commissionAmount: commissionAmount,
+                                      tradingDays: report.trading_days,
+                                    });
+                                  }}
+                                  className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                                >
+                                  Generate Invoice
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
                       )}
                     </TableBody>
                   </Table>
                 </CardContent>
               </Card>
-            </TabsContent>
+            )}
 
-            <TabsContent value="withdrawals">
+            {/* Withdrawal History Content */}
+            {activeTab === 'withdrawals' && (
               <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle>Withdrawals History</CardTitle>
-                  <Button onClick={() => setWithdrawalDialogOpen(true)}>
-                    Record Withdrawal
-                  </Button>
+                <CardHeader>
+                  <CardTitle>Withdrawal History</CardTitle>
+                  <CardDescription>
+                    All withdrawals made by {selectedClient.name}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Date</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead className="text-right">Amount Withdrawn</TableHead>
                         <TableHead>Notes</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -368,47 +498,47 @@ export default function ReportsPage() {
                       {withdrawals.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                            No withdrawals recorded yet.
+                            No withdrawals recorded yet. Use the button above to record when client withdraws money.
                           </TableCell>
                         </TableRow>
                       ) : (
                         withdrawals.map((withdrawal) => (
                           <TableRow key={withdrawal.id}>
                             <TableCell>
-                              {new Date(withdrawal.withdrawal_date).toLocaleDateString('en-IN')}
+                              {new Date(withdrawal.withdrawal_date).toLocaleDateString('en-IN', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric'
+                              })}
                             </TableCell>
                             <TableCell className="text-right font-medium">
                               {formatCurrency(withdrawal.amount)}
                             </TableCell>
-                            <TableCell>{withdrawal.notes || '-'}</TableCell>
+                            <TableCell className="text-muted-foreground">{withdrawal.notes || '-'}</TableCell>
                           </TableRow>
                         ))
                       )}
                     </TableBody>
                   </Table>
-                  <div className="mt-4 p-4 bg-muted rounded-lg">
-                    <p className="text-sm font-medium">
-                      Total Withdrawals: {formatCurrency(selectedClient.total_withdrawals)}
-                    </p>
-                  </div>
                 </CardContent>
               </Card>
-            </TabsContent>
+            )}
 
-            <TabsContent value="commission">
+            {/* Commission History Content */}
+            {activeTab === 'commission' && (
               <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle>Commission Payments</CardTitle>
-                  <Button onClick={() => setCommissionDialogOpen(true)}>
-                    Record Payment
-                  </Button>
+                <CardHeader>
+                  <CardTitle>Commission Payment History</CardTitle>
+                  <CardDescription>
+                    All commission payments received from {selectedClient.name}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead>Payment Date</TableHead>
+                        <TableHead className="text-right">Amount Received</TableHead>
                         <TableHead>Notes</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -416,19 +546,23 @@ export default function ReportsPage() {
                       {commissionPayments.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                            No commission payments recorded yet.
+                            No commission payments recorded yet. Use the button above to record when client pays commission.
                           </TableCell>
                         </TableRow>
                       ) : (
                         commissionPayments.map((payment) => (
                           <TableRow key={payment.id}>
                             <TableCell>
-                              {new Date(payment.payment_date).toLocaleDateString('en-IN')}
+                              {new Date(payment.payment_date).toLocaleDateString('en-IN', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric'
+                              })}
                             </TableCell>
-                            <TableCell className="text-right font-medium">
+                            <TableCell className="text-right font-medium text-green-600">
                               {formatCurrency(payment.amount)}
                             </TableCell>
-                            <TableCell>{payment.notes || '-'}</TableCell>
+                            <TableCell className="text-muted-foreground">{payment.notes || '-'}</TableCell>
                           </TableRow>
                         ))
                       )}
@@ -444,109 +578,154 @@ export default function ReportsPage() {
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
-          </Tabs>
+            )}
+          </div>
         </>
       )}
 
       <Dialog open={withdrawalDialogOpen} onOpenChange={setWithdrawalDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Record Withdrawal</DialogTitle>
-            <DialogDescription>
-              Record a withdrawal for {selectedClient?.name}
+            <DialogTitle className="text-xl">Record Client Withdrawal</DialogTitle>
+            <DialogDescription className="text-base">
+              Recording withdrawal for <span className="font-semibold text-foreground">{selectedClient?.name}</span>
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleWithdrawal}>
-            <div className="grid gap-4 py-4">
+            <div className="grid gap-5 py-4">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-900">
+                  <span className="font-semibold">Current Balance: </span>
+                  {formatCurrency(
+                    (selectedClient?.invested_amount || 0) +
+                      (selectedClient?.total_profit || 0) -
+                      (selectedClient?.total_withdrawals || 0)
+                  )}
+                </p>
+              </div>
+
               <div className="grid gap-2">
-                <Label htmlFor="w_amount">Amount *</Label>
+                <Label htmlFor="w_amount" className="text-base">How much did client withdraw? *</Label>
                 <Input
                   id="w_amount"
                   type="number"
                   step="0.01"
+                  placeholder="Enter withdrawal amount"
                   value={withdrawalForm.amount}
                   onChange={(e) => setWithdrawalForm({ ...withdrawalForm, amount: e.target.value })}
                   required
+                  className="text-lg h-12"
                 />
               </div>
+
               <div className="grid gap-2">
-                <Label htmlFor="w_date">Date *</Label>
+                <Label htmlFor="w_date" className="text-base">When was the withdrawal made? *</Label>
                 <Input
                   id="w_date"
                   type="date"
                   value={withdrawalForm.withdrawal_date}
                   onChange={(e) => setWithdrawalForm({ ...withdrawalForm, withdrawal_date: e.target.value })}
                   required
+                  className="h-12"
                 />
               </div>
+
               <div className="grid gap-2">
-                <Label htmlFor="w_notes">Notes</Label>
+                <Label htmlFor="w_notes" className="text-base">Add notes (optional)</Label>
                 <Input
                   id="w_notes"
+                  placeholder="e.g., Weekly profit withdrawal, Emergency withdrawal"
                   value={withdrawalForm.notes}
                   onChange={(e) => setWithdrawalForm({ ...withdrawalForm, notes: e.target.value })}
+                  className="h-12"
                 />
               </div>
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setWithdrawalDialogOpen(false)}>
+            <DialogFooter className="gap-2">
+              <Button type="button" variant="outline" onClick={() => {
+                setWithdrawalDialogOpen(false);
+                setWithdrawalForm({ amount: '', withdrawal_date: new Date().toISOString().split('T')[0], notes: '' });
+              }} size="lg">
                 Cancel
               </Button>
-              <Button type="submit">Record Withdrawal</Button>
+              <Button type="submit" size="lg" className="bg-green-600 hover:bg-green-700">
+                Save Withdrawal
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
       <Dialog open={commissionDialogOpen} onOpenChange={setCommissionDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Record Commission Payment</DialogTitle>
-            <DialogDescription>
-              Record a commission payment from {selectedClient?.name}
+            <DialogTitle className="text-xl">Record Commission Payment</DialogTitle>
+            <DialogDescription className="text-base">
+              Recording commission payment from <span className="font-semibold text-foreground">{selectedClient?.name}</span>
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCommissionPayment}>
-            <div className="grid gap-4 py-4">
+            <div className="grid gap-5 py-4">
+              <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg space-y-2">
+                <p className="text-sm text-orange-900">
+                  <span className="font-semibold">Commission Pending: </span>
+                  <span className="text-lg font-bold">{formatCurrency(selectedClient?.commission_due || 0)}</span>
+                </p>
+                <p className="text-xs text-orange-800">
+                  Commission Rate: {selectedClient?.commission_percentage}% of profit
+                </p>
+              </div>
+
               <div className="grid gap-2">
-                <Label htmlFor="c_amount">Amount *</Label>
+                <Label htmlFor="c_amount" className="text-base">How much commission did client pay? *</Label>
                 <Input
                   id="c_amount"
                   type="number"
                   step="0.01"
+                  placeholder="Enter commission amount"
                   value={commissionForm.amount}
                   onChange={(e) => setCommissionForm({ ...commissionForm, amount: e.target.value })}
                   required
+                  className="text-lg h-12"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Commission due: {formatCurrency(selectedClient?.commission_due || 0)}
+                  Can be partial or full payment of pending commission
                 </p>
               </div>
+
               <div className="grid gap-2">
-                <Label htmlFor="c_date">Date *</Label>
+                <Label htmlFor="c_date" className="text-base">When was the payment received? *</Label>
                 <Input
                   id="c_date"
                   type="date"
                   value={commissionForm.payment_date}
                   onChange={(e) => setCommissionForm({ ...commissionForm, payment_date: e.target.value })}
                   required
+                  className="h-12"
                 />
               </div>
+
               <div className="grid gap-2">
-                <Label htmlFor="c_notes">Notes</Label>
+                <Label htmlFor="c_notes" className="text-base">Add notes (optional)</Label>
                 <Input
                   id="c_notes"
+                  placeholder="e.g., Weekly commission, Partial payment"
                   value={commissionForm.notes}
                   onChange={(e) => setCommissionForm({ ...commissionForm, notes: e.target.value })}
+                  className="h-12"
                 />
               </div>
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setCommissionDialogOpen(false)}>
+            <DialogFooter className="gap-2">
+              <Button type="button" variant="outline" onClick={() => {
+                setCommissionDialogOpen(false);
+                setCommissionForm({ amount: '', payment_date: new Date().toISOString().split('T')[0], notes: '' });
+              }} size="lg">
                 Cancel
               </Button>
-              <Button type="submit">Record Payment</Button>
+              <Button type="submit" size="lg" className="bg-blue-600 hover:bg-blue-700">
+                Save Commission Payment
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

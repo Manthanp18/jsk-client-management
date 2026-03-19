@@ -70,11 +70,18 @@ export default function ClientsPage() {
 
     if (editingClientId) {
       // Update existing client
+      // Recalculate commission_due based on the new commission percentage and existing total profit
+      const existing_total_profit = parseFloat(formData.total_profit) || 0;
+      const updated_commission_due = existing_total_profit > 0
+        ? (existing_total_profit * commission_percentage) / 100
+        : 0;
+
       const { error } = await supabase.from('clients').update({
         name: formData.name,
         email: formData.email || null,
         invested_amount: parseFloat(formData.invested_amount) || 0,
         commission_percentage: commission_percentage,
+        commission_due: updated_commission_due,
       }).eq('id', editingClientId);
 
       if (error) {
