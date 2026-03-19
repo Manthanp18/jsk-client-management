@@ -214,10 +214,10 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Client Reports & Settlement</h1>
-        <p className="text-muted-foreground mt-1">
+        <h1 className="text-2xl sm:text-3xl font-bold">Client Reports & Settlement</h1>
+        <p className="text-sm sm:text-base text-muted-foreground mt-1">
           View client performance, record withdrawals, and track commission payments
         </p>
       </div>
@@ -249,44 +249,44 @@ export default function ReportsPage() {
           {/* Client Summary */}
           <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
             <CardHeader>
-              <CardTitle className="text-2xl">{selectedClient.name}</CardTitle>
-              <p className="text-sm text-muted-foreground">
+              <CardTitle className="text-xl sm:text-2xl">{selectedClient.name}</CardTitle>
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Commission Rate: {selectedClient.commission_percentage}% of profit
               </p>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 md:grid-cols-4">
+              <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Initial Investment</p>
-                  <p className="text-2xl font-bold">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide mb-1">Initial Investment</p>
+                  <p className="text-base sm:text-2xl font-bold truncate">
                     {formatCurrency(selectedClient.invested_amount)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Total Profit/Loss</p>
-                  <p className={`text-2xl font-bold ${selectedClient.total_profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide mb-1">Total Profit/Loss</p>
+                  <p className={`text-base sm:text-2xl font-bold truncate ${selectedClient.total_profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {formatCurrency(selectedClient.total_profit)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Current Balance</p>
-                  <p className="text-2xl font-bold text-blue-600">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide mb-1">Current Balance</p>
+                  <p className="text-base sm:text-2xl font-bold text-blue-600 truncate">
                     {formatCurrency(
                       selectedClient.invested_amount +
                         selectedClient.total_profit -
                         selectedClient.total_withdrawals
                     )}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
                     Available to withdraw
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Commission Pending</p>
-                  <p className="text-2xl font-bold text-orange-600">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide mb-1">Commission Pending</p>
+                  <p className="text-base sm:text-2xl font-bold text-orange-600 truncate">
                     {formatCurrency(selectedClient.commission_due)}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
                     To be paid to you
                   </p>
                 </div>
@@ -295,13 +295,13 @@ export default function ReportsPage() {
           </Card>
 
           {/* Quick Actions */}
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
             <Card className="border-green-200 hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <span className="text-lg">Client Withdraws Money</span>
+                  <span className="text-base sm:text-lg">Client Withdraws Money</span>
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-xs sm:text-sm">
                   When client withdraws profit or capital from their account
                 </CardDescription>
               </CardHeader>
@@ -313,9 +313,9 @@ export default function ReportsPage() {
                 >
                   Record Withdrawal
                 </Button>
-                <div className="mt-4 p-3 bg-muted rounded-md">
-                  <p className="text-sm font-medium">Total Withdrawn So Far</p>
-                  <p className="text-xl font-bold mt-1">{formatCurrency(selectedClient.total_withdrawals)}</p>
+                <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-muted rounded-md">
+                  <p className="text-xs sm:text-sm font-medium">Total Withdrawn So Far</p>
+                  <p className="text-base sm:text-xl font-bold mt-1 truncate">{formatCurrency(selectedClient.total_withdrawals)}</p>
                 </div>
               </CardContent>
             </Card>
@@ -323,9 +323,9 @@ export default function ReportsPage() {
             <Card className="border-blue-200 hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <span className="text-lg">Client Pays Commission</span>
+                  <span className="text-base sm:text-lg">Client Pays Commission</span>
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-xs sm:text-sm">
                   When client pays you commission on their profits
                 </CardDescription>
               </CardHeader>
@@ -338,14 +338,14 @@ export default function ReportsPage() {
                 >
                   Record Commission Payment
                 </Button>
-                <div className="mt-4 p-3 bg-muted rounded-md space-y-2">
-                  <div className="flex justify-between text-sm">
+                <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-muted rounded-md space-y-2">
+                  <div className="flex justify-between text-xs sm:text-sm">
                     <span>Total Received:</span>
-                    <span className="font-semibold">{formatCurrency(selectedClient.commission_received)}</span>
+                    <span className="font-semibold truncate ml-2">{formatCurrency(selectedClient.commission_received)}</span>
                   </div>
-                  <div className="flex justify-between text-sm text-orange-600">
+                  <div className="flex justify-between text-xs sm:text-sm text-orange-600">
                     <span className="font-medium">Pending:</span>
-                    <span className="font-bold">{formatCurrency(selectedClient.commission_due)}</span>
+                    <span className="font-bold truncate ml-2">{formatCurrency(selectedClient.commission_due)}</span>
                   </div>
                 </div>
               </CardContent>
@@ -355,10 +355,10 @@ export default function ReportsPage() {
           {/* History Section */}
           <div className="space-y-4">
             {/* Custom Horizontal Navigation */}
-            <div className="flex gap-2 p-1 bg-gray-100 rounded-lg w-fit">
+            <div className="flex gap-1 sm:gap-2 p-1 bg-gray-100 rounded-lg overflow-x-auto">
               <button
                 onClick={() => setActiveTab('weekly')}
-                className={`px-6 py-3 rounded-md font-medium text-sm transition-all ${
+                className={`px-3 sm:px-6 py-2 sm:py-3 rounded-md font-medium text-xs sm:text-sm transition-all whitespace-nowrap ${
                   activeTab === 'weekly'
                     ? 'bg-white text-blue-600 shadow-sm'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
@@ -368,7 +368,7 @@ export default function ReportsPage() {
               </button>
               <button
                 onClick={() => setActiveTab('withdrawals')}
-                className={`px-6 py-3 rounded-md font-medium text-sm transition-all ${
+                className={`px-3 sm:px-6 py-2 sm:py-3 rounded-md font-medium text-xs sm:text-sm transition-all whitespace-nowrap ${
                   activeTab === 'withdrawals'
                     ? 'bg-white text-green-600 shadow-sm'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
@@ -378,7 +378,7 @@ export default function ReportsPage() {
               </button>
               <button
                 onClick={() => setActiveTab('commission')}
-                className={`px-6 py-3 rounded-md font-medium text-sm transition-all ${
+                className={`px-3 sm:px-6 py-2 sm:py-3 rounded-md font-medium text-xs sm:text-sm transition-all whitespace-nowrap ${
                   activeTab === 'commission'
                     ? 'bg-white text-orange-600 shadow-sm'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
@@ -392,13 +392,15 @@ export default function ReportsPage() {
             {activeTab === 'weekly' && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Weekly Performance Summary</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-lg sm:text-xl">Weekly Performance Summary</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">
                     View weekly profit/loss breakdown for {selectedClient.name}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Table>
+                  {/* Desktop Table */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Week Start</TableHead>
@@ -472,6 +474,68 @@ export default function ReportsPage() {
                       )}
                     </TableBody>
                   </Table>
+                  </div>
+
+                  {/* Mobile Card View */}
+                  <div className="md:hidden space-y-4">
+                    {weeklyReports.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground text-sm">
+                        No weekly data available yet. Add daily PNL entries to see weekly summaries.
+                      </div>
+                    ) : (
+                      weeklyReports.map((report, index) => {
+                        const INVOICE_COMMISSION_PERCENTAGE = 50;
+                        const commissionAmount = report.weekly_pnl > 0
+                          ? (report.weekly_pnl * INVOICE_COMMISSION_PERCENTAGE) / 100
+                          : 0;
+
+                        return (
+                          <Card key={index} className="p-4">
+                            <div className="space-y-3">
+                              <div className="flex items-start justify-between">
+                                <div className="text-xs text-muted-foreground">
+                                  {new Date(report.week_start).toLocaleDateString('en-IN', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                  })} - {new Date(report.week_end).toLocaleDateString('en-IN', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    year: 'numeric'
+                                  })}
+                                </div>
+                                <Badge className="text-xs">{report.trading_days} days</Badge>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Weekly Profit/Loss</p>
+                                <p className={`text-xl font-semibold ${report.weekly_pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                  {report.weekly_pnl >= 0 ? '+' : ''}{formatCurrency(report.weekly_pnl)}
+                                </p>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  if (!selectedClient) return;
+                                  generateWeeklyInvoice({
+                                    clientName: selectedClient.name,
+                                    weekStart: report.week_start,
+                                    weekEnd: report.week_end,
+                                    weeklyPnl: report.weekly_pnl,
+                                    commissionPercentage: INVOICE_COMMISSION_PERCENTAGE,
+                                    commissionAmount: commissionAmount,
+                                    tradingDays: report.trading_days,
+                                  });
+                                }}
+                                className="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                              >
+                                Generate Invoice
+                              </Button>
+                            </div>
+                          </Card>
+                        );
+                      })
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -480,13 +544,15 @@ export default function ReportsPage() {
             {activeTab === 'withdrawals' && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Withdrawal History</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-lg sm:text-xl">Withdrawal History</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">
                     All withdrawals made by {selectedClient.name}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Table>
+                  {/* Desktop Table */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Date</TableHead>
@@ -520,6 +586,38 @@ export default function ReportsPage() {
                       )}
                     </TableBody>
                   </Table>
+                  </div>
+
+                  {/* Mobile Card View */}
+                  <div className="md:hidden space-y-3">
+                    {withdrawals.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground text-sm">
+                        No withdrawals recorded yet. Use the button above to record when client withdraws money.
+                      </div>
+                    ) : (
+                      withdrawals.map((withdrawal) => (
+                        <Card key={withdrawal.id} className="p-3">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(withdrawal.withdrawal_date).toLocaleDateString('en-IN', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })}
+                              </p>
+                              <p className="text-lg font-semibold mt-1">
+                                {formatCurrency(withdrawal.amount)}
+                              </p>
+                              {withdrawal.notes && (
+                                <p className="text-xs text-muted-foreground mt-1">{withdrawal.notes}</p>
+                              )}
+                            </div>
+                          </div>
+                        </Card>
+                      ))
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -528,13 +626,15 @@ export default function ReportsPage() {
             {activeTab === 'commission' && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Commission Payment History</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-lg sm:text-xl">Commission Payment History</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">
                     All commission payments received from {selectedClient.name}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Table>
+                  {/* Desktop Table */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Payment Date</TableHead>
@@ -568,11 +668,44 @@ export default function ReportsPage() {
                       )}
                     </TableBody>
                   </Table>
-                  <div className="mt-4 p-4 bg-muted rounded-lg space-y-2">
-                    <p className="text-sm font-medium">
+                  </div>
+
+                  {/* Mobile Card View */}
+                  <div className="md:hidden space-y-3">
+                    {commissionPayments.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground text-sm">
+                        No commission payments recorded yet. Use the button above to record when client pays commission.
+                      </div>
+                    ) : (
+                      commissionPayments.map((payment) => (
+                        <Card key={payment.id} className="p-3">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(payment.payment_date).toLocaleDateString('en-IN', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })}
+                              </p>
+                              <p className="text-lg font-semibold text-green-600 mt-1">
+                                {formatCurrency(payment.amount)}
+                              </p>
+                              {payment.notes && (
+                                <p className="text-xs text-muted-foreground mt-1">{payment.notes}</p>
+                              )}
+                            </div>
+                          </div>
+                        </Card>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-muted rounded-lg space-y-2">
+                    <p className="text-xs sm:text-sm font-medium">
                       Total Received: {formatCurrency(selectedClient.commission_received)}
                     </p>
-                    <p className="text-sm font-medium text-orange-600">
+                    <p className="text-xs sm:text-sm font-medium text-orange-600">
                       Commission Due: {formatCurrency(selectedClient.commission_due)}
                     </p>
                   </div>

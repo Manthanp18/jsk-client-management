@@ -145,46 +145,50 @@ export default function WeeklySettlementPage() {
   const isFutureWeek = selectedWeekOffset > 0;
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-start">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Weekly Settlement</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold">Weekly Settlement</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
             {formatDate(weekDates.start)} - {formatDate(weekDates.end)} (Mon-Fri)
           </p>
-          {isCurrentWeek && (
-            <Badge className="mt-2 bg-blue-100 text-blue-800">Current Week</Badge>
-          )}
-          {selectedWeekOffset === -1 && (
-            <Badge className="mt-2 bg-gray-100 text-gray-800">Last Week</Badge>
-          )}
-          {selectedWeekOffset < -1 && (
-            <Badge className="mt-2 bg-gray-100 text-gray-800">
-              {Math.abs(selectedWeekOffset)} weeks ago
-            </Badge>
-          )}
-          {isFutureWeek && (
-            <Badge className="mt-2 bg-purple-100 text-purple-800">Future Week</Badge>
-          )}
+          <div className="mt-2">
+            {isCurrentWeek && (
+              <Badge className="bg-blue-100 text-blue-800 text-xs">Current Week</Badge>
+            )}
+            {selectedWeekOffset === -1 && (
+              <Badge className="bg-gray-100 text-gray-800 text-xs">Last Week</Badge>
+            )}
+            {selectedWeekOffset < -1 && (
+              <Badge className="bg-gray-100 text-gray-800 text-xs">
+                {Math.abs(selectedWeekOffset)} weeks ago
+              </Badge>
+            )}
+            {isFutureWeek && (
+              <Badge className="bg-purple-100 text-purple-800 text-xs">Future Week</Badge>
+            )}
+          </div>
         </div>
 
         {/* Week Navigation Controls */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           {/* Navigation Arrows */}
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setSelectedWeekOffset(selectedWeekOffset - 1)}
+              className="flex-1 text-xs sm:text-sm"
             >
-              ← Previous Week
+              ← Previous
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setSelectedWeekOffset(selectedWeekOffset + 1)}
+              className="flex-1 text-xs sm:text-sm"
             >
-              Next Week →
+              Next →
             </Button>
           </div>
 
@@ -194,6 +198,7 @@ export default function WeeklySettlementPage() {
               variant={selectedWeekOffset === -1 ? "default" : "outline"}
               size="sm"
               onClick={() => setSelectedWeekOffset(-1)}
+              className="flex-1 text-xs sm:text-sm"
             >
               Last Week
             </Button>
@@ -201,7 +206,7 @@ export default function WeeklySettlementPage() {
               variant={isCurrentWeek ? "default" : "outline"}
               size="sm"
               onClick={() => setSelectedWeekOffset(0)}
-              className={isCurrentWeek ? "bg-blue-600 hover:bg-blue-700" : ""}
+              className={`flex-1 text-xs sm:text-sm ${isCurrentWeek ? "bg-blue-600 hover:bg-blue-700" : ""}`}
             >
               Current Week
             </Button>
@@ -209,13 +214,13 @@ export default function WeeklySettlementPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Week PNL</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Total Week PNL</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${totals.weeklyPnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`text-lg sm:text-2xl font-bold truncate ${totals.weeklyPnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {formatCurrency(totals.weeklyPnl)}
             </div>
           </CardContent>
@@ -223,13 +228,13 @@ export default function WeeklySettlementPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Your Commission</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Your Commission</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-lg sm:text-2xl font-bold text-blue-600 truncate">
               {formatCurrency(totals.weekCommission)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
               This week only
             </p>
           </CardContent>
@@ -237,10 +242,10 @@ export default function WeeklySettlementPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Profitable Clients</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Profitable Clients</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-xl sm:text-2xl font-bold text-green-600">
               {totals.profitableClients}
             </div>
           </CardContent>
@@ -248,10 +253,10 @@ export default function WeeklySettlementPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Loss Clients</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Loss Clients</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
+            <div className="text-xl sm:text-2xl font-bold text-red-600">
               {totals.lossClients}
             </div>
           </CardContent>
@@ -260,10 +265,12 @@ export default function WeeklySettlementPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Client-wise Settlement Report</CardTitle>
+          <CardTitle className="text-lg sm:text-xl">Client-wise Settlement Report</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Client Name</TableHead>
@@ -315,17 +322,66 @@ export default function WeeklySettlementPage() {
               )}
             </TableBody>
           </Table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-4">
+            {weeklyData.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                No trading data for this week yet.
+              </div>
+            ) : (
+              weeklyData.map((data) => (
+                <Card key={data.client.id} className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <h3 className="font-semibold text-base">{data.client.name}</h3>
+                    {data.weeklyPnl > 0 ? (
+                      <Badge variant="default" className="bg-green-100 text-green-800 text-xs">
+                        Profit
+                      </Badge>
+                    ) : data.weeklyPnl < 0 ? (
+                      <Badge variant="destructive" className="text-xs">Loss</Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-xs">No Trade</Badge>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-muted-foreground text-xs">Trading Days</p>
+                      <p className="font-medium">{data.tradingDays}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">Commission %</p>
+                      <p className="font-medium">{data.client.commission_percentage}%</p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="text-muted-foreground text-xs">Weekly PNL</p>
+                      <p className={`text-lg font-semibold ${data.weeklyPnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatCurrency(data.weeklyPnl)}
+                      </p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="text-muted-foreground text-xs">Your Commission</p>
+                      <p className="text-lg font-semibold text-blue-600">
+                        {formatCurrency(data.weekCommission)}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              ))
+            )}
+          </div>
 
           {weeklyData.length > 0 && (
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h3 className="font-semibold text-blue-900 mb-2">
+            <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <h3 className="font-semibold text-blue-900 mb-2 text-sm sm:text-base">
                 {isCurrentWeek ? 'This Week\'s Settlement Summary' : 'Week Settlement Summary'}
               </h3>
-              <div className="space-y-1 text-sm text-blue-800">
+              <div className="space-y-1 text-xs sm:text-sm text-blue-800">
                 <p>• Total commission {isCurrentWeek ? 'to collect' : 'collected'} this week: <span className="font-bold">{formatCurrency(totals.weekCommission)}</span></p>
                 <p>• {totals.profitableClients} clients made profit</p>
                 <p>• {totals.lossClients} clients had losses (no commission)</p>
-                <p className="text-xs text-blue-600 mt-2">
+                <p className="text-[10px] sm:text-xs text-blue-600 mt-2">
                   Note: Commission is calculated only on profitable clients. Clients in loss don&apos;t incur commission until they recover.
                 </p>
               </div>

@@ -195,93 +195,162 @@ export default function ClientsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-3xl font-bold">Clients</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold">Clients</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Manage your trading clients
           </p>
         </div>
-        <Button onClick={() => setDialogOpen(true)}>
+        <Button onClick={() => setDialogOpen(true)} className="w-full sm:w-auto">
           Add Client
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>All Clients ({clients.length})</CardTitle>
+          <CardTitle className="text-lg sm:text-xl">All Clients ({clients.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead className="text-right">Invested Amount</TableHead>
-                <TableHead className="text-right">Commission %</TableHead>
-                <TableHead className="text-right">Total Profit</TableHead>
-                <TableHead className="text-right">Current Balance</TableHead>
-                <TableHead className="text-right">Commission Due</TableHead>
-                <TableHead className="text-right">Commission Received</TableHead>
-                <TableHead className="text-center">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {clients.length === 0 ? (
+          {/* Desktop Table View */}
+          <div className="hidden lg:block overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                    No clients yet. Click Add Client to get started.
-                  </TableCell>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead className="text-right">Invested Amount</TableHead>
+                  <TableHead className="text-right">Commission %</TableHead>
+                  <TableHead className="text-right">Total Profit</TableHead>
+                  <TableHead className="text-right">Current Balance</TableHead>
+                  <TableHead className="text-right">Commission Due</TableHead>
+                  <TableHead className="text-right">Commission Received</TableHead>
+                  <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
-              ) : (
-                clients.map((client) => (
-                  <TableRow key={client.id}>
-                    <TableCell className="font-medium">{client.name}</TableCell>
-                    <TableCell>{client.email || '-'}</TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(client.invested_amount)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {client.commission_percentage}%
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <span className={client.total_profit >= 0 ? 'text-green-600' : 'text-red-600'}>
-                        {formatCurrency(client.total_profit)}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(calculateCurrentBalance(client))}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(client.commission_due)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(client.commission_received)}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex gap-2 justify-center">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEdit(client)}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleDelete(client.id, client.name)}
-                        >
-                          Delete
-                        </Button>
-                      </div>
+              </TableHeader>
+              <TableBody>
+                {clients.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                      No clients yet. Click Add Client to get started.
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  clients.map((client) => (
+                    <TableRow key={client.id}>
+                      <TableCell className="font-medium">{client.name}</TableCell>
+                      <TableCell>{client.email || '-'}</TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(client.invested_amount)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {client.commission_percentage}%
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span className={client.total_profit >= 0 ? 'text-green-600' : 'text-red-600'}>
+                          {formatCurrency(client.total_profit)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(calculateCurrentBalance(client))}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(client.commission_due)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(client.commission_received)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex gap-2 justify-center">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEdit(client)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDelete(client.id, client.name)}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="lg:hidden space-y-4">
+            {clients.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                No clients yet. Click Add Client to get started.
+              </div>
+            ) : (
+              clients.map((client) => (
+                <Card key={client.id} className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="font-semibold text-base">{client.name}</h3>
+                      <p className="text-xs text-muted-foreground">{client.email || 'No email'}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm mb-4">
+                    <div>
+                      <p className="text-muted-foreground text-xs">Invested</p>
+                      <p className="font-medium">{formatCurrency(client.invested_amount)}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">Commission %</p>
+                      <p className="font-medium">{client.commission_percentage}%</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">Total Profit</p>
+                      <p className={`font-medium ${client.total_profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatCurrency(client.total_profit)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">Current Balance</p>
+                      <p className="font-semibold">{formatCurrency(calculateCurrentBalance(client))}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">Commission Due</p>
+                      <p className="font-medium">{formatCurrency(client.commission_due)}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">Commission Received</p>
+                      <p className="font-medium">{formatCurrency(client.commission_received)}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEdit(client)}
+                      className="flex-1"
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleDelete(client.id, client.name)}
+                      className="flex-1"
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </Card>
+              ))
+            )}
+          </div>
         </CardContent>
       </Card>
 

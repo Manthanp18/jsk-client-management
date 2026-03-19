@@ -214,56 +214,54 @@ export default function DailyPnlPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-3xl font-bold">Daily PNL Entry</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold">Daily PNL Entry</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Enter PNL for all clients - see everyone at once
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <div>
-            <Label htmlFor="date" className="text-sm">Select Date</Label>
-            <Input
-              id="date"
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-48"
-            />
-          </div>
+        <div className="w-full sm:w-auto">
+          <Label htmlFor="date" className="text-sm">Select Date</Label>
+          <Input
+            id="date"
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="w-full sm:w-48 h-10"
+          />
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Total Clients</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{clients.length}</div>
+            <div className="text-xl sm:text-2xl font-bold">{clients.length}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Entries Today</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Entries Today</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-xl sm:text-2xl font-bold text-blue-600">
               {todayEntries} / {clients.length}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
               {clients.length - todayEntries} pending
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total PNL Today</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Total PNL Today</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${totalTodayPnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`text-lg sm:text-2xl font-bold truncate ${totalTodayPnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {formatCurrency(totalTodayPnl)}
             </div>
           </CardContent>
@@ -272,7 +270,7 @@ export default function DailyPnlPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>
+          <CardTitle className="text-base sm:text-lg">
             All Clients - {new Date(selectedDate).toLocaleDateString('en-IN', {
               weekday: 'long',
               day: 'numeric',
@@ -282,7 +280,9 @@ export default function DailyPnlPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
+          {/* Desktop Table View */}
+          <div className="hidden md:block">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[200px]">Client Name</TableHead>
@@ -369,12 +369,90 @@ export default function DailyPnlPage() {
               )}
             </TableBody>
           </Table>
+          </div>
 
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800">
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-4">
+            {clients.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                No clients found. Add clients first.
+              </div>
+            ) : (
+              clients.map((entry) => (
+                <Card key={entry.client.id} className={`p-4 ${entry.hasEntry ? 'bg-green-50 border-green-200' : ''}`}>
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-semibold text-base">{entry.client.name}</h3>
+                        <p className="text-xs text-muted-foreground">{entry.client.commission_percentage}% commission</p>
+                      </div>
+                      {entry.hasEntry ? (
+                        <Badge variant="default" className="bg-green-100 text-green-800 text-xs">
+                          Saved
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="text-xs">Pending</Badge>
+                      )}
+                    </div>
+
+                    {entry.yesterdayPnl !== undefined && (
+                      <div className="text-sm">
+                        <span className="text-muted-foreground">Yesterday: </span>
+                        <span className={entry.yesterdayPnl >= 0 ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+                          {formatCurrency(entry.yesterdayPnl)}
+                        </span>
+                      </div>
+                    )}
+
+                    <div>
+                      <Label htmlFor={`pnl-${entry.client.id}`} className="text-sm">PNL Amount</Label>
+                      <Input
+                        id={`pnl-${entry.client.id}`}
+                        type="number"
+                        step="0.01"
+                        value={pnlInputs[entry.client.id] || ''}
+                        onChange={(e) => handleInputChange(entry.client.id, e.target.value)}
+                        placeholder="Enter PNL (+ or -)"
+                        className={`mt-1 h-10 ${entry.hasEntry ? 'border-green-500' : ''}`}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            savePnl(entry.client.id);
+                          }
+                        }}
+                      />
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => savePnl(entry.client.id)}
+                        disabled={saving[entry.client.id]}
+                        className="flex-1"
+                      >
+                        {saving[entry.client.id] ? 'Saving...' : entry.hasEntry ? 'Update' : 'Save'}
+                      </Button>
+                      {entry.hasEntry && entry.entryId && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => deletePnl(entry.client.id, entry.entryId!)}
+                          className="flex-1"
+                        >
+                          Delete
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              ))
+            )}
+          </div>
+
+          <div className="mt-4 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-xs sm:text-sm text-blue-800">
               <strong>💡 Quick Tips:</strong>
               <br />
-              • Green rows = Already saved for today
+              • Green rows/cards = Already saved for today
               • Enter positive numbers for profit, negative for loss (e.g., -5000)
               • Press Enter after typing to quickly save
               • Yesterday&apos;s PNL shown for reference
