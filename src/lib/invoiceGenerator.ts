@@ -8,6 +8,7 @@ interface InvoiceData {
   commissionPercentage: number;
   commissionAmount: number;
   tradingDays: number;
+  vpsCharges?: number;
 }
 
 export function generateWeeklyInvoice(data: InvoiceData) {
@@ -97,21 +98,30 @@ export function generateWeeklyInvoice(data: InvoiceData) {
   doc.text(`Commission Rate (${data.commissionPercentage}% of profit)`, 20, yPos);
   doc.text('-', 150, yPos);
 
+  // VPS Charges (if applicable)
+  if (data.vpsCharges && data.vpsCharges > 0) {
+    yPos += 10;
+    doc.text('VPS Charges', 20, yPos);
+    doc.setFont('helvetica', 'bold');
+    doc.text(formatCurrency(data.vpsCharges), 150, yPos);
+  }
+
   // Divider line
   yPos += 8;
   doc.setDrawColor(200, 200, 200);
   doc.line(15, yPos, 195, yPos);
 
-  // Total Commission
+  // Total Commission (including VPS if applicable)
   yPos += 12;
+  const totalAmount = data.commissionAmount + (data.vpsCharges || 0);
   doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
   doc.rect(15, yPos - 8, 180, 12, 'F');
 
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.text('TOTAL COMMISSION DUE', 20, yPos);
-  doc.text(formatCurrency(data.commissionAmount), 150, yPos);
+  doc.text(data.vpsCharges && data.vpsCharges > 0 ? 'TOTAL AMOUNT DUE' : 'TOTAL COMMISSION DUE', 20, yPos);
+  doc.text(formatCurrency(totalAmount), 150, yPos);
 
   // Commission Calculation Details
   yPos += 20;
@@ -120,13 +130,17 @@ export function generateWeeklyInvoice(data: InvoiceData) {
   doc.setFont('helvetica', 'italic');
 
   if (data.weeklyPnl > 0) {
-    doc.text(
-      `Commission Calculation: ${formatCurrency(data.weeklyPnl)} x ${data.commissionPercentage}% = ${formatCurrency(data.commissionAmount)}`,
-      20,
-      yPos
-    );
+    let calcText = `Commission Calculation: ${formatCurrency(data.weeklyPnl)} x ${data.commissionPercentage}% = ${formatCurrency(data.commissionAmount)}`;
+    if (data.vpsCharges && data.vpsCharges > 0) {
+      calcText += ` + VPS Charges ${formatCurrency(data.vpsCharges)} = ${formatCurrency(totalAmount)}`;
+    }
+    doc.text(calcText, 20, yPos);
   } else {
-    doc.text('No commission applicable as there was no profit this week.', 20, yPos);
+    let calcText = 'No commission applicable as there was no profit this week.';
+    if (data.vpsCharges && data.vpsCharges > 0) {
+      calcText += ` VPS Charges: ${formatCurrency(data.vpsCharges)}`;
+    }
+    doc.text(calcText, 20, yPos);
   }
 
   // Save the PDF

@@ -12,6 +12,7 @@ const navItems = [
   { href: '/daily-pnl', label: 'Daily PNL' },
   { href: '/weekly-settlement', label: 'Weekly Settlement' },
   { href: '/reports', label: 'Reports' },
+  { href: '/manual-invoice', label: 'Manual Invoice' },
 ];
 
 export function Nav() {
