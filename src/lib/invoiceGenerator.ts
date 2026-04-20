@@ -167,6 +167,7 @@ interface MultiClientInvoiceData {
   clients: ClientInvoiceData[];
   weekStart: string;
   weekEnd: string;
+  invoiceName?: string;
 }
 
 export function generateMultiClientInvoice(data: MultiClientInvoiceData) {
@@ -319,6 +320,26 @@ export function generateMultiClientInvoice(data: MultiClientInvoiceData) {
   doc.text(`This consolidated invoice covers ${data.clients.length} client(s) for the trading period.`, 20, yPos);
 
   // Save the PDF
-  const fileName = `Consolidated_Invoice_${data.weekStart}_to_${data.weekEnd}.pdf`;
+  let fileName: string;
+
+  // If custom invoice name is provided (for multiple clients), use it
+  if (data.invoiceName && data.clients.length > 1) {
+    const customName = data.invoiceName.replace(/\s+/g, '_');
+    fileName = `Invoice_${customName}_${data.weekStart}_to_${data.weekEnd}.pdf`;
+  } else if (data.clients.length === 1) {
+    // Single client: Invoice_ClientName_Date.pdf
+    const clientName = data.clients[0].clientName.replace(/\s+/g, '_');
+    fileName = `Invoice_${clientName}_${data.weekStart}_to_${data.weekEnd}.pdf`;
+  } else if (data.clients.length <= 3) {
+    // Multiple clients (up to 3): Include all names
+    const clientNames = data.clients
+      .map(c => c.clientName.replace(/\s+/g, '_'))
+      .join('_');
+    fileName = `Invoice_${clientNames}_${data.weekStart}_to_${data.weekEnd}.pdf`;
+  } else {
+    // Many clients: Use "MultipleClients" with count
+    fileName = `Invoice_${data.clients.length}Clients_${data.weekStart}_to_${data.weekEnd}.pdf`;
+  }
+
   doc.save(fileName);
 }

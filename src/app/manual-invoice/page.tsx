@@ -37,6 +37,7 @@ export default function ManualInvoicePage() {
     startDate: '',
     endDate: '',
   });
+  const [invoiceName, setInvoiceName] = useState('');
 
   useEffect(() => {
     loadClients();
@@ -174,6 +175,7 @@ export default function ManualInvoicePage() {
         clients: invoiceClients,
         weekStart: dateRange.startDate,
         weekEnd: dateRange.endDate,
+        invoiceName: invoiceName.trim() || undefined,
       });
 
       alert('Invoice generated successfully!');
@@ -232,6 +234,25 @@ export default function ManualInvoicePage() {
                 />
               </div>
             </div>
+
+            {/* Invoice Name (for multiple clients) */}
+            {selectedClientIds.length > 1 && (
+              <div className="space-y-2">
+                <Label htmlFor="invoiceName">
+                  Invoice Name (Optional)
+                </Label>
+                <Input
+                  id="invoiceName"
+                  type="text"
+                  placeholder="e.g., Weekly_Trading_Invoice or MultiClient_Apr"
+                  value={invoiceName}
+                  onChange={(e) => setInvoiceName(e.target.value.replace(/\s+/g, '_'))}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Custom name for the PDF file. Leave empty to auto-generate from client names.
+                </p>
+              </div>
+            )}
 
             {/* Multi-Select Client Dropdown */}
             <div className="space-y-2">
